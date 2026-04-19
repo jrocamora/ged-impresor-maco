@@ -233,8 +233,16 @@ def render_interactive_viewer(svg_content):
         const svgEl      = container.querySelector('svg');
 
         if (svgEl) {{
-            svgEl.style.maxWidth = 'none';
+            // Remove hardcoded width/height to make it fluid
+            svgEl.removeAttribute('width');
+            svgEl.removeAttribute('height');
+            svgEl.style.width    = '100%';
+            svgEl.style.height   = 'auto';
             svgEl.style.display  = 'block';
+            svgEl.style.maxWidth = 'none';
+            
+            // Auto-fit on first load if possible
+            setTimeout(fitToWindow, 100);
         }}
 
         function setZoom(val) {{
