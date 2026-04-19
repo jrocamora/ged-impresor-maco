@@ -421,6 +421,13 @@ if "data" in st.session_state and st.session_state["data"][1]:
                 "❌ Graphviz no trobat al sistema. "
                 "Instal·la'l des de https://graphviz.org/download/ i afegeix-lo al PATH."
             )
+            with st.expander("🛠️ Diagnòstic per a Streamlit Cloud"):
+                import shutil
+                dot_path = shutil.which("dot")
+                st.write(f"**Cerca de 'dot':** {dot_path if dot_path else 'No trobat'}")
+                st.write("**PATH actual:**")
+                st.code(os.environ.get("PATH", ""))
+                st.info("💡 Si 'dot' no apareix i ja has pujat el fitxer `packages.txt`, ves al dashboard de Streamlit Cloud i fes un **'Reboot App'** des del menú de configuració.")
         else:
             viewer_html = render_interactive_viewer(svg_content)
             st.components.v1.html(viewer_html, height=690, scrolling=False)
