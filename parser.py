@@ -1,16 +1,39 @@
 from gedcom.parser import Parser
 from gedcom.element.individual import IndividualElement
 from gedcom.element.family import FamilyElement
+import os
+
+def _ensure_utf8_sig(file_path):
+    """
+    Attempts to read the file with various encodings and rewrites it as utf-8-sig
+    to ensure compatibility with the python-gedcom library.
+    """
+    encodings = ['utf-8-sig', 'utf-8', 'iso-8859-1', 'cp1252', 'utf-16']
+    
+    with open(file_path, 'rb') as f:
+        content = f.read()
+    
+    decoded_content = None
+    for enc in encodings:
+        try:
+            decoded_content = content.decode(enc)
+            # print(f"S'ha detectat l'encodificació: {enc}")
+            break
+        except Exception:
+            continue
+            
+    if decoded_content is None:
+        raise ValueError("No s'ha pogut determinar l'encodificació del fitxer GEDCOM (prova a desar-lo com a UTF-8).")
+    
+    # Rewrite original temp file as utf-8-sig
+    with open(file_path, 'w', encoding='utf-8-sig', errors='replace') as f:
+        f.write(decoded_content)
 
 def load_gedcom(file_path):
     """Loads a GEDCOM file and returns the parser and a list of all individuals."""
+    _ensure_utf8_sig(file_path)
     parser = Parser()
-    try:
-        parser.parse_file(file_path)
-    except Exception as e:
-        print(f"Error parsing GEDCOM: {e}")
-        return None, []
-        
+    parser.parse_file(file_path)
     individuals = [e for e in parser.get_root_child_elements() if isinstance(e, IndividualElement)]
     return parser, individuals
 

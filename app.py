@@ -24,13 +24,13 @@ st.markdown("""
     /* ── Main background ── */
     .stApp {
         background-color: #f4f6f9;
-        font-family: 'Inter', 'Segoe UI', sans-serif;
     }
 
     /* ── Sidebar ── */
     section[data-testid="stSidebar"] {
         background-color: #ffffff;
         border-right: 1px solid #dde3ed;
+        font-family: 'Inter', 'Segoe UI', sans-serif;
     }
     section[data-testid="stSidebar"] > div {
         padding-top: 1.5rem;
@@ -42,10 +42,9 @@ st.markdown("""
         color: #1e293b !important;
     }
 
-    /* ── Fix for Material Icons Ligatures ── */
-    [data-testid="stIconMaterial"] {
-        font-family: 'Material Icons' !important;
-    }
+    /* NOTE: DO NOT set font-family on .stApp or any broad selector —
+       it cascades into Streamlit's icon spans and breaks Material Symbols ligatures. */
+
 
     /* ── Sidebar section headings ── */
     .sidebar-heading {
