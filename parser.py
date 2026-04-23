@@ -73,7 +73,7 @@ def get_person_details(person):
         "death_place": d_place or ""
     }
 
-def collect_tree_data(parser, root_person, direction="Both", max_depth=3):
+def collect_tree_data(parser, root_person, direction="Both", max_depth=3, show_last_spouses=False):
     """
     Traverses the family tree and extracts nodes and edges.
 
@@ -119,7 +119,7 @@ def collect_tree_data(parser, root_person, direction="Both", max_depth=3):
         main_id = ensure_indi_node(person)
         node = indi_nodes[main_id]
 
-        if current_depth >= max_depth:
+        if current_depth >= max_depth and not show_last_spouses:
             return
 
         families = list(parser.get_families(person, "FAMS"))
@@ -151,12 +151,14 @@ def collect_tree_data(parser, root_person, direction="Both", max_depth=3):
                 })
                 existing_fam_ids.add(fam_ptr)
 
-            children = parser.get_family_members(fam_element, "CHIL")
-            edge_label = f"({marriage_num})" if marriage_count > 1 else ""
+            # Recurse into children ONLY if we haven't reached max_depth
+            if current_depth < max_depth:
+                children = parser.get_family_members(fam_element, "CHIL")
+                edge_label = f"({marriage_num})" if marriage_count > 1 else ""
 
-            for child in children:
-                add_edge(main_id, child.get_pointer(), edge_label)
-                traverse_descendants(child, current_depth + 1)
+                for child in children:
+                    add_edge(main_id, child.get_pointer(), edge_label)
+                    traverse_descendants(child, current_depth + 1)
 
         node["has_multiple_marriages"] = len(node["spouses"]) > 1
 

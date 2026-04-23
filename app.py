@@ -366,6 +366,7 @@ if "data" in st.session_state and st.session_state["data"][1]:
     )
     layout    = st.sidebar.selectbox("Disposició", ["Horizontal", "Vertical"])
     max_depth = st.sidebar.slider("Profunditat (generacions)", min_value=1, max_value=10, value=3)
+    show_last_spouses = st.sidebar.checkbox("Mostra cònjuges de l'última generació", value=False, help="Inclou la parella de les persones de l'última generació de descendents.")
 
     # ── Appearance ───────────────────────────────────────────────────────────
     st.sidebar.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
@@ -378,22 +379,30 @@ if "data" in st.session_state and st.session_state["data"][1]:
         help="Desactiva per obtenir un arbre en blanc i negre, ideal per impressió."
     )
     rounded_corners = st.sidebar.checkbox("Vores arrodonides", value=False)
-    compact_mode    = st.sidebar.checkbox("Mode compacte", value=False, help="Redueix l'espai entre caixes i generacions per maximitzar l'espai.")
+    density_options = {"standard": "Estàndard", "compact": "Compacte", "super_compact": "Super Compacte"}
+    compact_mode = st.sidebar.selectbox(
+        "Densitat de l'arbre",
+        options=list(density_options.keys()),
+        index=2,
+        format_func=lambda x: density_options[x],
+        help="Controla l'espai entre nodes i generacions. El mode 'Super Compacte' maximitza l'espai i augmenta lleugerament la lletra."
+    )
     node_width = st.sidebar.slider("Amplada dels nodes (px)", min_value=120, max_value=400, value=180, step=10)
 
     # ── Detail toggles ────────────────────────────────────────────────────────
     st.sidebar.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
     st.sidebar.markdown('<p class="sidebar-heading">📋 Detalls</p>', unsafe_allow_html=True)
 
-    show_birth    = st.sidebar.checkbox("Data de naixement",  value=True)
-    show_death    = st.sidebar.checkbox("Data de defunció",   value=True)
-    show_location = st.sidebar.checkbox("Llocs",             value=True)
+    show_birth    = st.sidebar.checkbox("Data de naixement",  value=False)
+    show_death    = st.sidebar.checkbox("Data de defunció",   value=False)
+    show_location = st.sidebar.checkbox("Llocs",             value=False)
 
     # ── Generate ──────────────────────────────────────────────────────────────
     if selected_person:
         nodes, edges = collect_tree_data(
             parser, selected_person,
-            direction=direction, max_depth=max_depth
+            direction=direction, max_depth=max_depth,
+            show_last_spouses=show_last_spouses
         )
 
         node_count = len(nodes)

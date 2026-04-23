@@ -88,7 +88,7 @@ def _gender_bg(gender, theme, use_gender_colors):
     return theme["unknown"]
 
 
-def _person_rows(details, bg, theme, show_birth, show_death, show_location, is_spouse=False, node_width=None, compact_mode=False, prefix=None):
+def _person_rows(details, bg, theme, show_birth, show_death, show_location, is_spouse=False, node_width=None, compact_mode="standard", prefix=None):
     """
     Build Graphviz HTML <TR> rows for one person's info block.
     Returns a list of HTML strings.
@@ -96,13 +96,18 @@ def _person_rows(details, bg, theme, show_birth, show_death, show_location, is_s
     rows = []
     fc = _escape(theme["font_main"])
     
-    if compact_mode:
-        pad_name = "2" if is_spouse else "2"
-    else:
+    if compact_mode == "super_compact":
+        pad_name = "1"
+        size_name = "11"
+        size_date = "9"
+    elif compact_mode == "compact":
+        pad_name = "2"
+        size_name = "10"
+        size_date = "8"
+    else: # standard
         pad_name = "3" if is_spouse else "4"
-        
-    size_name = "10"
-    size_date = "8"
+        size_name = "10"
+        size_date = "8"
     wa = f' WIDTH="{node_width}"' if node_width else ""
 
     if not details:
@@ -167,7 +172,7 @@ def _separator_row(theme, marriage_num=None, node_width=None):
 # Label builders
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _build_indi_label(node, show_birth, show_death, show_location, theme, use_gender_colors, rounded_corners=True, node_width=None, is_root=False, compact_mode=False):
+def _build_indi_label(node, show_birth, show_death, show_location, theme, use_gender_colors, rounded_corners=True, node_width=None, is_root=False, compact_mode="standard"):
     """
     HTML label for an INDI node.
     """
@@ -188,7 +193,7 @@ def _build_indi_label(node, show_birth, show_death, show_location, theme, use_ge
         sp_bg = _gender_bg(sp_gender, theme, use_gender_colors)
         
         prefix = None
-        if compact_mode:
+        if compact_mode in ["compact", "super_compact"]:
             prefix = f"&#x26AD; ({m_num}) " if m_num else "&#x26AD; "
         else:
             rows.append(_separator_row(theme, m_num, node_width=node_width))
@@ -203,7 +208,7 @@ def _build_indi_label(node, show_birth, show_death, show_location, theme, use_ge
     return f'<<TABLE BORDER="{border_w}" COLOR="{border_c}" CELLBORDER="0" CELLSPACING="0"{style}>{"".join(rows)}</TABLE>>'
 
 
-def _build_fam_label(node, show_birth, show_death, show_location, theme, use_gender_colors, rounded_corners=True, node_width=None, is_root=False, compact_mode=False):
+def _build_fam_label(node, show_birth, show_death, show_location, theme, use_gender_colors, rounded_corners=True, node_width=None, is_root=False, compact_mode="standard"):
     """
     HTML label for a FAM (ancestor couple) node.
     """
@@ -217,7 +222,7 @@ def _build_fam_label(node, show_birth, show_death, show_location, theme, use_gen
 
     if wife:
         prefix = None
-        if compact_mode:
+        if compact_mode in ["compact", "super_compact"]:
             prefix = "&#x26AD; "
         elif husband:
             rows.append(_separator_row(theme, node_width=node_width))
@@ -277,7 +282,7 @@ def _calculate_generations(nodes, edges, root_id):
 
 def generate_graph(nodes, edges, layout="Vertical", show_birth=True, show_death=True,
                    show_location=True, theme_name="Clàssic", use_gender_colors=True,
-                   root_id=None, rounded_corners=True, node_width=None, compact_mode=False):
+                   root_id=None, rounded_corners=True, node_width=None, compact_mode="standard"):
     """Generates a beautifully styled graphviz Digraph from the node/edge data."""
 
     rankdir = "TB" if layout == "Vertical" else "LR"
@@ -293,10 +298,13 @@ def generate_graph(nodes, edges, layout="Vertical", show_birth=True, show_death=
     dot.attr(bgcolor="white")
     dot.attr(pad="0.5")
     
-    if compact_mode:
+    if compact_mode == "super_compact":
+        dot.attr(nodesep="0.1")
+        dot.attr(ranksep="0.25")
+    elif compact_mode == "compact":
         dot.attr(nodesep="0.15")
         dot.attr(ranksep="0.4")
-    else:
+    else: # standard
         dot.attr(nodesep="0.5")
         dot.attr(ranksep="1.2")
     
