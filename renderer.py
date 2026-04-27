@@ -140,11 +140,11 @@ def _person_rows(details, bg, theme, show_birth, show_death, show_location, is_s
     if show_birth and details.get("birth_date"):
         loc = (f" {_escape(details['birth_place'])}"
                if show_location and details.get("birth_place") else "")
-        parts.append(f"b. {_escape(details['birth_date'])}{loc}")
+        parts.append(f"* {_escape(details['birth_date'])}{loc}")
     if show_death and details.get("death_date"):
         loc = (f" {_escape(details['death_place'])}"
                if show_location and details.get("death_place") else "")
-        parts.append(f"d. {_escape(details['death_date'])}{loc}")
+        parts.append(f"&#x2020; {_escape(details['death_date'])}{loc}")
 
     if parts:
         rows.append(
@@ -238,6 +238,82 @@ def _build_fam_label(node, show_birth, show_death, show_location, theme, use_gen
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Consanguineous marriage merging
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _merge_consanguineous_nodes(nodes, edges):
+    """
+    When two INDI nodes are spouses of each other (consanguineous / relative
+    marriage), merge them into a single node to avoid visual duplication.
+
+    The first-encountered node keeps its structure (with the spouse embedded),
+    and the second node is absorbed — its edges are redirected to the first.
+
+    Returns: (merged_nodes, merged_edges)
+    """
+    indi_map = {n["id"]: n for n in nodes if n["type"] == "indi"}
+
+    merged_away = set()   # IDs absorbed into another node
+    merge_map = {}        # absorbed_id -> surviving_id
+
+    for node in nodes:
+        if node["type"] != "indi" or node["id"] in merged_away:
+            continue
+        for sp_info in node.get("spouses", []):
+            sp_details = sp_info.get("details")
+            if not sp_details:
+                continue
+            sp_id = sp_details.get("id")
+            if (sp_id
+                    and sp_id in indi_map
+                    and sp_id not in merged_away
+                    and sp_id != node["id"]):
+                # This spouse has their own standalone node — absorb it
+                merged_away.add(sp_id)
+                merge_map[sp_id] = node["id"]
+
+                # Transfer additional spouses from the absorbed node
+                # (spouses of B that aren't A)
+                absorbed_node = indi_map[sp_id]
+                existing_sp_ids = {
+                    s.get("details", {}).get("id")
+                    for s in node["spouses"] if s.get("details")
+                }
+                for abs_sp in absorbed_node.get("spouses", []):
+                    abs_sp_details = abs_sp.get("details")
+                    if abs_sp_details and abs_sp_details.get("id") != node["id"]:
+                        if abs_sp_details.get("id") not in existing_sp_ids:
+                            node["spouses"].append(abs_sp)
+                            existing_sp_ids.add(abs_sp_details.get("id"))
+
+                if len(node["spouses"]) > 1:
+                    node["has_multiple_marriages"] = True
+
+    if not merge_map:
+        return nodes, edges
+
+    # Remove absorbed nodes
+    new_nodes = [n for n in nodes if n["id"] not in merged_away]
+
+    # Redirect edges, deduplicating
+    new_edges = []
+    seen_edges = set()
+    for e in edges:
+        from_id = merge_map.get(e["from_id"], e["from_id"])
+        to_id = merge_map.get(e["to_id"], e["to_id"])
+        key = (from_id, to_id)
+        if key not in seen_edges and from_id != to_id:
+            seen_edges.add(key)
+            new_edges.append({
+                "from_id": from_id,
+                "to_id": to_id,
+                "label": e.get("label", "")
+            })
+
+    return new_nodes, new_edges
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Generation depth (BFS from root)
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -282,8 +358,13 @@ def _calculate_generations(nodes, edges, root_id):
 
 def generate_graph(nodes, edges, layout="Vertical", show_birth=True, show_death=True,
                    show_location=True, theme_name="Clàssic", use_gender_colors=True,
-                   root_id=None, rounded_corners=True, node_width=None, compact_mode="standard"):
+                   root_id=None, rounded_corners=True, node_width=None, compact_mode="standard",
+                   consanguinity_mode="standard"):
     """Generates a beautifully styled graphviz Digraph from the node/edge data."""
+
+    # Apply consanguineous merge if requested
+    if consanguinity_mode == "merged":
+        nodes, edges = _merge_consanguineous_nodes(nodes, edges)
 
     rankdir = "TB" if layout == "Vertical" else "LR"
     engine  = "dot"

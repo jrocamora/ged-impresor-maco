@@ -368,6 +368,14 @@ if "data" in st.session_state and st.session_state["data"][1]:
     max_depth = st.sidebar.slider("Profunditat (generacions)", min_value=1, max_value=10, value=3)
     show_last_spouses = st.sidebar.checkbox("Mostra cònjuges de l'última generació", value=False, help="Inclou la parella de les persones de l'última generació de descendents.")
 
+    consanguinity_options = {"standard": "Estàndard (duplicat)", "merged": "Fusionada (caixa única)"}
+    consanguinity_mode = st.sidebar.selectbox(
+        "Casaments entre parents",
+        options=list(consanguinity_options.keys()),
+        format_func=lambda x: consanguinity_options[x],
+        help="Quan dues persones de l'arbre es casen entre elles, tria com mostrar-ho: duplicant els nodes (estàndard) o fusionant-los en una sola caixa."
+    )
+
     # ── Appearance ───────────────────────────────────────────────────────────
     st.sidebar.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
     st.sidebar.markdown('<p class="sidebar-heading">🎨 Aparença</p>', unsafe_allow_html=True)
@@ -424,7 +432,8 @@ if "data" in st.session_state and st.session_state["data"][1]:
             root_id=selected_id,
             rounded_corners=rounded_corners,
             node_width=node_width,
-            compact_mode=compact_mode
+            compact_mode=compact_mode,
+            consanguinity_mode=consanguinity_mode
         )
         svg_content = render_to_svg(dot)
 
