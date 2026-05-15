@@ -359,7 +359,7 @@ def _calculate_generations(nodes, edges, root_id):
 def generate_graph(nodes, edges, layout="Vertical", show_birth=True, show_death=True,
                    show_location=True, theme_name="Clàssic", use_gender_colors=True,
                    root_id=None, rounded_corners=True, node_width=None, compact_mode="standard",
-                   consanguinity_mode="standard"):
+                   consanguinity_mode="standard", title=None):
     """Generates a beautifully styled graphviz Digraph from the node/edge data."""
 
     # Apply consanguineous merge if requested
@@ -378,6 +378,13 @@ def generate_graph(nodes, edges, layout="Vertical", show_birth=True, show_death=
     dot.attr(dpi="300")
     dot.attr(bgcolor="white")
     dot.attr(pad="0.5")
+    
+    if title:
+        escaped_title = _escape(title)
+        fc = theme["font_main"]
+        dot.attr(label=f'<<FONT POINT-SIZE="22" COLOR="{fc}" FACE="Segoe UI, Arial"><B>{escaped_title}</B></FONT>>')
+        dot.attr(labelloc="t")
+        dot.attr(labeljust="c")
     
     if compact_mode == "super_compact":
         dot.attr(nodesep="0.1")

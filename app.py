@@ -376,6 +376,23 @@ if "data" in st.session_state and st.session_state["data"][1]:
         help="Quan dues persones de l'arbre es casen entre elles, tria com mostrar-ho: duplicant els nodes (estàndard) o fusionant-los en una sola caixa."
     )
 
+    # ── Title ─────────────────────────────────────────────────────────────────
+    st.sidebar.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
+    st.sidebar.markdown('<p class="sidebar-heading">📝 Títol</p>', unsafe_allow_html=True)
+    
+    person_name = format_name(selected_person) if selected_person else ""
+    if direction == "Descendants":
+        default_title = f"Descendents de {person_name}"
+    elif direction == "Ancestors":
+        default_title = f"Avantpassats de {person_name}"
+    else:
+        default_title = f"Família de {person_name}"
+        
+    show_title = st.sidebar.checkbox("Mostra el títol", value=True)
+    title_text = ""
+    if show_title:
+        title_text = st.sidebar.text_input("Text del títol", value=default_title, label_visibility="collapsed")
+
     # ── Appearance ───────────────────────────────────────────────────────────
     st.sidebar.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
     st.sidebar.markdown('<p class="sidebar-heading">🎨 Aparença</p>', unsafe_allow_html=True)
@@ -433,7 +450,8 @@ if "data" in st.session_state and st.session_state["data"][1]:
             rounded_corners=rounded_corners,
             node_width=node_width,
             compact_mode=compact_mode,
-            consanguinity_mode=consanguinity_mode
+            consanguinity_mode=consanguinity_mode,
+            title=title_text if show_title else None
         )
         svg_content = render_to_svg(dot)
 
