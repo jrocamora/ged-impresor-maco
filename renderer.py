@@ -375,7 +375,6 @@ def generate_graph(nodes, edges, layout="Vertical", show_birth=True, show_death=
     dot.attr(rankdir=rankdir)
     # The size and ratio are removed from here to allow natural size for SVG.
     # They will be applied explicitly in render_to_pdf for A4 printing.
-    dot.attr(dpi="300")
     dot.attr(bgcolor="white")
     dot.attr(pad="0.2")  # Reduced padding to ~0.5cm
     
@@ -526,6 +525,7 @@ def render_to_pdf(dot, output_path):
     """Saves to PDF."""
     try:
         # Apply A4 size limits only for the PDF output
+        dot.attr(dpi="300")
         dot.attr(size="8.3,11.7")
         dot.attr(margin="0.2")  # ~0.5cm page margin
         dot.attr(ratio="compress")
