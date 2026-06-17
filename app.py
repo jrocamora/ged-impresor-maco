@@ -232,6 +232,21 @@ def render_interactive_viewer(svg_content):
         const svgEl      = container.querySelector('svg');
 
         if (svgEl) {{
+            // Ensure viewBox attribute exists before removing width/height
+            let viewBoxStr = svgEl.getAttribute('viewBox');
+            if (!viewBoxStr) {{
+                const wAttr = svgEl.getAttribute('width');
+                const hAttr = svgEl.getAttribute('height');
+                if (wAttr && hAttr) {{
+                    const wVal = parseFloat(wAttr);
+                    const hVal = parseFloat(hAttr);
+                    if (!isNaN(wVal) && !isNaN(hVal)) {{
+                        viewBoxStr = `0 0 ${{wVal}} ${{hVal}}`;
+                        svgEl.setAttribute('viewBox', viewBoxStr);
+                    }}
+                }}
+            }}
+
             // Remove hardcoded width/height to make it fluid
             svgEl.removeAttribute('width');
             svgEl.removeAttribute('height');
@@ -257,8 +272,22 @@ def render_interactive_viewer(svg_content):
 
         function fitToWindow() {{
             if (!svgEl) return;
-            const svgW = svgEl.viewBox?.baseVal?.width  || svgEl.width?.baseVal?.value  || 800;
-            const svgH = svgEl.viewBox?.baseVal?.height || svgEl.height?.baseVal?.value || 600;
+            
+            let svgW = 800;
+            let svgH = 600;
+            
+            const viewBoxStr = svgEl.getAttribute('viewBox');
+            if (viewBoxStr) {{
+                const parts = viewBoxStr.trim().split(/[\s,]+/);
+                if (parts.length === 4) {{
+                    svgW = parseFloat(parts[2]) || 800;
+                    svgH = parseFloat(parts[3]) || 600;
+                }}
+            }} else {{
+                svgW = svgEl.viewBox?.baseVal?.width  || svgEl.width?.baseVal?.value  || 800;
+                svgH = svgEl.viewBox?.baseVal?.height || svgEl.height?.baseVal?.value || 600;
+            }}
+            
             const vpW  = viewport.clientWidth  - 48;
             const vpH  = viewport.clientHeight - 48;
             const fitZ = Math.min((vpW / svgW) * 100, (vpH / svgH) * 100);
