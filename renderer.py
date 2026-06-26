@@ -15,6 +15,7 @@ THEMES = {
         "border":      "#b0b8c8",
         "root_border": "#c8900a",
         "edge":        "#778899",
+        "font_face":   "Segoe UI, Arial, sans-serif",
     },
     "Terra": {
         "male":        "#d4c5a9",
@@ -26,6 +27,7 @@ THEMES = {
         "border":      "#a08060",
         "root_border": "#b8860b",
         "edge":        "#8b7355",
+        "font_face":   "Segoe UI, Arial, sans-serif",
     },
     "Oceà": {
         "male":        "#b8d4e8",
@@ -37,6 +39,7 @@ THEMES = {
         "border":      "#5b8ca8",
         "root_border": "#e07820",
         "edge":        "#4a7a9b",
+        "font_face":   "Segoe UI, Arial, sans-serif",
     },
     "Bosc": {
         "male":        "#c8ddc8",
@@ -48,6 +51,19 @@ THEMES = {
         "border":      "#5a8060",
         "root_border": "#c8700a",
         "edge":        "#6a9060",
+        "font_face":   "Segoe UI, Arial, sans-serif",
+    },
+    "Impressió B/N": {
+        "male":        "#ffffff",
+        "female":      "#ffffff",
+        "unknown":     "#ffffff",
+        "sep_bg":      "#ffffff",
+        "sep_color":   "#000000",
+        "font_main":   "#000000",
+        "border":      "#000000",
+        "root_border": "#000000",
+        "edge":        "#000000",
+        "font_face":   "Verdana, sans-serif",
     },
 }
 
@@ -61,6 +77,7 @@ BW_THEME = {
     "border":      "#555555",
     "root_border": "#000000",
     "edge":        "#555555",
+    "font_face":   "Segoe UI, Arial, sans-serif",
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -95,6 +112,7 @@ def _person_rows(details, bg, theme, show_birth, show_death, show_location, is_s
     """
     rows = []
     fc = _escape(theme["font_main"])
+    ff = _escape(theme.get("font_face", "Segoe UI, Arial, sans-serif"))
     
     if compact_mode == "super_compact":
         pad_name = "1"
@@ -114,7 +132,7 @@ def _person_rows(details, bg, theme, show_birth, show_death, show_location, is_s
         label_text = f"<I>{prefix or ''}Desconegut/da</I>"
         rows.append(
             f'<TR><TD ALIGN="CENTER" BGCOLOR="{bg}" CELLPADDING="{pad_name}"{wa}>'
-            f'<FONT FACE="Segoe UI, Arial" POINT-SIZE="{size_name}" COLOR="{fc}">{label_text}</FONT>'
+            f'<FONT FACE="{ff}" POINT-SIZE="{size_name}" COLOR="{fc}">{label_text}</FONT>'
             f'</TD></TR>'
         )
         return rows
@@ -131,7 +149,7 @@ def _person_rows(details, bg, theme, show_birth, show_death, show_location, is_s
         
     rows.append(
         f'<TR><TD ALIGN="CENTER" BGCOLOR="{bg}" CELLPADDING="{pad_name}"{wa}>'
-        f'<FONT FACE="Segoe UI, Arial" POINT-SIZE="{size_name}" COLOR="{fc}">{inner_label}</FONT>'
+        f'<FONT FACE="{ff}" POINT-SIZE="{size_name}" COLOR="{fc}">{inner_label}</FONT>'
         f'</TD></TR>'
     )
 
@@ -149,7 +167,7 @@ def _person_rows(details, bg, theme, show_birth, show_death, show_location, is_s
     if parts:
         rows.append(
             f'<TR><TD ALIGN="CENTER" BGCOLOR="{bg}" CELLPADDING="1"{wa}>'
-            f'<FONT FACE="Segoe UI, Arial" POINT-SIZE="{size_date}" COLOR="{fc}">{"   ".join(parts)}</FONT>'
+            f'<FONT FACE="{ff}" POINT-SIZE="{size_date}" COLOR="{fc}">{"   ".join(parts)}</FONT>'
             f'</TD></TR>'
         )
 
@@ -160,11 +178,12 @@ def _separator_row(theme, marriage_num=None, node_width=None):
     """⚭ separator row between main person and spouse."""
     sep_bg = theme["sep_bg"]
     sep_color = theme["sep_color"]
+    ff = _escape(theme.get("font_face", "Segoe UI, Arial, sans-serif"))
     label = f"&#x26AD; ({marriage_num})" if marriage_num else "&#x26AD;"
     wa = f' WIDTH="{node_width}"' if node_width else ""
     return (
         f'<TR><TD ALIGN="CENTER" BGCOLOR="{sep_bg}" CELLPADDING="1"{wa}>'
-        f'<FONT FACE="Segoe UI, Arial" POINT-SIZE="9" COLOR="{sep_color}"><I>{label}</I></FONT>'
+        f'<FONT FACE="{ff}" POINT-SIZE="9" COLOR="{sep_color}"><I>{label}</I></FONT>'
         f'</TD></TR>'
     )
 
@@ -369,7 +388,11 @@ def generate_graph(nodes, edges, layout="Vertical", show_birth=True, show_death=
     rankdir = "TB" if layout == "Vertical" else "LR"
     engine  = "dot"
 
-    theme = THEMES.get(theme_name, THEMES["Clàssic"]) if use_gender_colors else BW_THEME
+    base_theme = THEMES.get(theme_name, THEMES["Clàssic"])
+    if theme_name == "Impressió B/N":
+        theme = base_theme
+    else:
+        theme = base_theme if use_gender_colors else BW_THEME
 
     dot = graphviz.Digraph(engine=engine)
     dot.attr(rankdir=rankdir)
@@ -378,10 +401,12 @@ def generate_graph(nodes, edges, layout="Vertical", show_birth=True, show_death=
     dot.attr(bgcolor="white")
     dot.attr(pad="0.2")  # Reduced padding to ~0.5cm
     
+    ff = _escape(theme.get("font_face", "Segoe UI, Arial, sans-serif"))
+    
     if title:
         escaped_title = _escape(title)
         fc = theme["font_main"]
-        dot.attr(label=f'<<FONT POINT-SIZE="22" COLOR="{fc}" FACE="Segoe UI, Arial"><B>{escaped_title}</B></FONT>>')
+        dot.attr(label=f'<<FONT POINT-SIZE="22" COLOR="{fc}" FACE="{ff}"><B>{escaped_title}</B></FONT>>')
         dot.attr(labelloc="t")
         dot.attr(labeljust="c")
     
@@ -412,7 +437,7 @@ def generate_graph(nodes, edges, layout="Vertical", show_birth=True, show_death=
              penwidth="0.9",
              arrowhead="none",
              fontsize="8",
-             fontname="Segoe UI, Arial",
+             fontname=theme.get("font_face", "Segoe UI, Arial, sans-serif"),
              fontcolor="#999999")
 
     # Calculate generations for rank=same grouping
